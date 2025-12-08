@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import sys
 import chess
 import random
@@ -120,3 +122,4 @@ def uci_protocol():
 
 if __name__ == "__main__":
     uci_protocol()
+
