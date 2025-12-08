@@ -26,11 +26,6 @@ jobs:
         
       - name: chmod
         run: chmod +x ./engines/strawberrychess.py
-
-      - name: Use dos2unix to fix engine shebang string
-        run: |
-          sudo apt install dos2unix
-          dos2unix ./engines/strawberrychess.py
         
       - name: Run
         run: |
