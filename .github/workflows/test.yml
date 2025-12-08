@@ -1,0 +1,43 @@
+name: Test engine
+
+on:
+  workflow_dispatch:
+  push:
+    paths: "user_interface.py"
+
+jobs:
+  test-engine:
+    name: Test engine
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      
+      - name: Install requirements
+        run: pip install -r requirements.txt
+        
+      - name: Token
+        run: sed -i "s/XXXXXXXXXXXXXXXXXXXXXXXX/${{ secrets.TOKEN }}/g" config.yml
+        
+      - name: chmod
+        run: chmod +x ./engines/strawberrychess.py
+        
+      - name: Run
+        run: |
+          python -u user_interface.py &
+          PID=$!
+          # Auto-exit before GitHub 6h limit
+          ( sleep 20100 && echo "Time up. Killing bot..." && kill -SIGTERM $PID ) &
+          wait $PID
+          echo "Bot ended cleanly."
+
+#      - name: Self-restart
+#        if: always()
+#        run: gh workflow run run.yml
+#        env:
+#          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
