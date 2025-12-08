@@ -1,0 +1,27 @@
+name: Fix engine file
+
+on:
+  workflow_dispatch:
+  push:
+    paths: "user_interface.py"
+
+jobs:
+  fix-engine-file:
+    name: Fix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Use dos2unix to fix engine shebang string
+        run: |
+          sudo apt install dos2unix
+          dos2unix ./engines/strawberrychess.py
+      
+      - name: Commit & Push engine
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git commit -m "Fix engine"
+          git push --force
