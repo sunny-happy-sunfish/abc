@@ -22,8 +22,8 @@ jobs:
           cd engines
           pyinstaller --onefile strawberrychess.py
           cd ..
-          mv -f dist/strawberrychess engines/strawberrychess
-          rm -r dist
+          mv -f engines/dist/strawberrychess engines/strawberrychess
+          rm -r engines/dist
       
       - name: Commit and push engine
         run: |
