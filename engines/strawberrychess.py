@@ -1,125 +1,107 @@
 #!/usr/bin/env python3
 
-import sys
 import chess
-import random
+import sys
+import time
 
-# --- Evaluation Function ---
-# Piece values for material count
-PIECE_VALUES = {
-    chess.PAWN: 100,
-    chess.KNIGHT: 320,
-    chess.BISHOP: 330,
-    chess.ROOK: 500,
-    chess.QUEEN: 900,
-    chess.KING: 20000
-}
+class BasicUCIEngine:
+    def __init__(self):
+        self.board = chess.Board()
+        self.name = "StrawberryChess v1.0"
+        self.author = "MK"
+        self.depth_limit = None
+        self.time_limit_ms = None
 
-def evaluate_board(board):
-    """
-    Evaluates the board position based on material count.
-    Positive score for White, negative for Black.
-    """
-    if board.is_checkmate():
-        if board.turn == chess.WHITE:
-            return -float('inf') # Black wins
-        else:
-            return float('inf') # White wins
-    if board.is_stalemate() or board.is_insufficient_material() or board.can_claim_draw():
-        return 0
+    def evaluate_board(self, board):
+        if board.is_checkmate():
+            return 100000 if board.turn == chess.BLACK else -100000
+        if board.is_game_over(claim_draw=True):
+            return 0
+        piece_values = {'P': 100, 'N': 300, 'B': 320, 'R': 500, 'Q': 900, 'K': 0,
+                        'p': -100, 'n': -300, 'b': -320, 'r': -500, 'q': -900, 'k': 0}
+        score = sum(piece_values[piece.symbol()] for square in chess.SQUARES if (piece := board.piece_at(square)))
+        return score
 
-    score = 0
-    for piece_type in PIECE_VALUES:
-        score += len(board.pieces(piece_type, chess.WHITE)) * PIECE_VALUES[piece_type]
-        score -= len(board.pieces(piece_type, chess.BLACK)) * PIECE_VALUES[piece_type]
-    return score
+    def search_best_move(self):
+        start_time = time.time()
+        legal_moves = list(self.board.legal_moves)
+        if not legal_moves:
+            return "bestmove (none)"
 
-# --- Search Algorithm (Alpha-Beta Pruning) ---
-def minimax(board, depth, alpha, beta, maximizing_player):
-    if depth == 0 or board.is_game_over():
-        return evaluate_board(board)
+        best_score = float('-inf') if self.board.turn == chess.WHITE else float('inf')
+        best_move = legal_moves[0] 
 
-    if maximizing_player:
-        max_eval = -float('inf')
-        for move in board.legal_moves:
-            board.push(move)
-            eval = minimax(board, depth - 1, alpha, beta, False)
-            board.pop()
-            max_eval = max(max_eval, eval)
-            alpha = max(alpha, eval)
-            if beta <= alpha:
-                break
-        return max_eval
-    else:
-        min_eval = float('inf')
-        for move in board.legal_moves:
-            board.push(move)
-            eval = minimax(board, depth - 1, alpha, beta, True)
-            board.pop()
-            min_eval = min(min_eval, eval)
-            beta = min(beta, eval)
-            if beta <= alpha:
-                break
-        return min_eval
-
-def find_best_move(board, depth=3):
-    """Finds the best move using minimax with alpha-beta pruning."""
-    best_move = None
-    best_score = -float('inf') if board.turn == chess.WHITE else float('inf')
-
-    for move in board.legal_moves:
-        board.push(move)
-        score = minimax(board, depth - 1, -float('inf'), float('inf'), board.turn == chess.BLACK)
-        board.pop()
-
-        if board.turn == chess.WHITE:
-            if score > best_score:
-                best_score = score
-                best_move = move
-        else:
-            if score < best_score:
-                best_score = score
-                best_move = move
-    return best_move
-
-# --- UCI Protocol Implementation ---
-def uci_protocol():
-    board = chess.Board()
-    while True:
-        line = sys.stdin.readline().strip().split()
-        if not line:
-            continue
-
-        command = line[0]
-
-        if command == "uci":
-            sys.stdout.write("id name StrawberryChess v1.0\n")
-            sys.stdout.write("id author MK\n")
-            sys.stdout.write("uciok\n")
-        elif command == "isready":
-            sys.stdout.write("readyok\n")
-        elif command == "position":
-            if "startpos" in line:
-                board = chess.Board()
-            elif "fen" in line:
-                fen_index = line.index("fen") + 1
-                fen = " ".join(line[fen_index:])
-                board = chess.Board(fen)
-            moves_index = next((i for i, x in enumerate(line) if x == "moves"), len(line))
-            if moves_index < len(line):
-                for move_uci in line[moves_index + 1:]:
-                    move = chess.Move.from_uci(move_uci)
-                    board.push(move)
-        elif command == "go":
-            best_move = find_best_move(board)
-            if best_move:
-                sys.stdout.write(f"bestmove {best_move.uci()}\n")
+        for move in legal_moves:
+            self.board.push(move)
+            score = self.evaluate_board(self.board)
+            self.board.pop()
+            
+            if self.board.turn == chess.WHITE:
+                if score > best_score:
+                    best_score = score
+                    best_move = move
             else:
-                # Handle game over or no moves
-                sys.stdout.write("bestmove (none)\n")
-        elif command == "quit":
-            break
+                if score < best_score:
+                    best_score = score
+                    best_move = move
+            
+            if self.depth_limit is not None and self.depth_limit <= 1:
+                break
+            if self.time_limit_ms is not None and (time.time() - start_time) * 1000 >= self.time_limit_ms:
+                break
+        
+        return f"bestmove {best_move.uci()}"
+
+    def uci_loop(self):
+        print("id name " + self.name)
+        print("id author " + self.author)
+        print("uciok")
+        
+        while True:
+            line = sys.stdin.readline().strip()
+            if not line:
+                continue
+            parts = line.split()
+            command = parts[0]
+
+            if command == "uci":
+                print("id name " + self.name)
+                print("id author " + self.author)
+                print("uciok")
+            elif command == "isready":
+                print("readyok")
+            elif command == "ucinewgame":
+                self.board = chess.Board()
+            elif command == "position":
+                self.board = chess.Board()
+                if parts[1] == "fen":
+                    fen_string = " ".join(parts[2:8])
+                    self.board = chess.Board(fen_string)
+                    moves_index = 8
+                elif parts[1] == "startpos":
+                    moves_index = 2
+                
+                if len(parts) > moves_index and parts[moves_index] == "moves":
+                    for move_uci in parts[moves_index+1:]:
+                        move = chess.Move.from_uci(move_uci)
+                        if move in self.board.legal_moves:
+                            self.board.push(move)
+
+            elif command == "go":
+                self.depth_limit = None
+                self.time_limit_ms = None
+                if "depth" in parts:
+                    self.depth_limit = int(parts[parts.index("depth") + 1])
+                if "movetime" in parts:
+                    self.time_limit_ms = int(parts[parts.index("movetime") + 1])
+                
+                best_move_command = self.search_best_move()
+                print(best_move_command)
+
+            elif command == "quit":
+                break
 
 if __name__ == "__main__":
-    uci_protocol()
+    engine = BasicUCIEngine()
+    engine.uci_loop()
 
