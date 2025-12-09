@@ -92,7 +92,7 @@ class BasicUCIEngine:
                 self.time_limit_ms = None
                 if "depth" in parts:
                     self.depth_limit = int(parts[parts.index("depth") + 1])
-                if "movetime" in parts:
+                if "time" in parts:
                     self.time_limit_ms = int(parts[parts.index("movetime") + 1])
                 
                 best_move_command = self.search_best_move()
