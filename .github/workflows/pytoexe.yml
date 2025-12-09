@@ -17,6 +17,11 @@ jobs:
         run: |
           pip install pyinstaller
 
+      - name: Install python-chess
+        run: |
+          pip install chess
+          pip install python-chess
+
       - name: Convert engine to executable
         run: |
           cd engines
