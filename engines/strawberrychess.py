@@ -5,6 +5,7 @@ print("---ENGINE STARTING NOW---", file=sys.stderr, flush=True)
 import chess
 import sys
 import time
+import traceback
 
 class BasicUCIEngine:
     def __init__(self):
@@ -122,6 +123,13 @@ class BasicUCIEngine:
      
 
 if __name__ == "__main__":
-    engine = BasicUCIEngine()
-    engine.uci_loop()
+    try:
+        engine = BasicUCIEngine()
+        engine.uci_loop()
+    except Exception as e:
+        # Print the error to the console (sys.stderr) so you can see it in the terminal
+        print(f"FATAL CRASH: {e}", file=sys.stderr, flush=True)
+        print(traceback.format_exc(), file=sys.stderr, flush=True)
+        # Prevent immediate exit so you can read the error in the terminal
+        input("Press Enter to close window...") 
 
