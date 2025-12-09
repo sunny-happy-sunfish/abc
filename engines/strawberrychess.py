@@ -24,7 +24,7 @@ class BasicUCIEngine:
 
     def negaMax(board, depth, alpha, beta):
         if depth == 0 or board.is_game_over():
-        return self.evaluate_board(board) * (1 if board.turn == chess.WHITE else -1)
+            return self.evaluate_board(board) * (1 if board.turn == chess.WHITE else -1)
 
         max_score = float("-inf")
         for move in board.legal_moves:
