@@ -20,6 +20,12 @@ jobs:
       
       - name: Install requirements
         run: pip install -r requirements.txt
+
+      - name: Install python-chess in engines folder
+        run: |
+          cd engines
+          pip install python-chess
+          cd ..
         
       - name: Token
         run: sed -i "s/XXXXXXXXXXXXXXXXXXXXXXXX/${{ secrets.TOKEN }}/g" config.yml
