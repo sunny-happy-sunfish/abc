@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import chess
 import sys
 import time
