@@ -67,48 +67,57 @@ class BasicUCIEngine:
         print("uciok")
         
         while True:
-            line = sys.stdin.readline().strip()
-            if not line:
-                continue
-            parts = line.split()
-            command = parts[0]
+            try:
+                line = sys.stdin.readline().strip()
+                if not line:
+                    continue
+                parts = line.split()
+                command = parts[0]
 
-            if command == "uci":
-                print("id name " + self.name)
-                print("id author " + self.author)
-                print("uciok")
-            elif command == "isready":
-                print("readyok")
-            elif command == "ucinewgame":
-                self.board = chess.Board()
-            elif command == "position":
-                self.board = chess.Board()
-                if parts[1] == "fen":
-                    fen_string = " ".join(parts[2:8])
-                    self.board = chess.Board(fen_string)
-                    moves_index = 8
-                elif parts[1] == "startpos":
-                    moves_index = 2
+                if command == "uci":
+                    print("id name " + self.name)
+                    print("id author " + self.author)
+                    print("uciok")
+                elif command == "isready":
+                    print("readyok")
+                elif command == "ucinewgame":
+                    self.board = chess.Board()
+                elif command == "position":
+                    self.board = chess.Board()
+                    if parts[1] == "fen":
+                        fen_string = " ".join(parts[2:8])
+                        self.board = chess.Board(fen_string)
+                        moves_index = 8
+                    elif parts[1] == "startpos":
+                        moves_index = 2
                 
-                if len(parts) > moves_index and parts[moves_index] == "moves":
-                    for move_uci in parts[moves_index+1:]:
-                        move = chess.Move.from_uci(move_uci)
-                        if move in self.board.legal_moves:
-                            self.board.push(move)
+                    if len(parts) > moves_index and parts[moves_index] == "moves":
+                        for move_uci in parts[moves_index+1:]:
+                            move = chess.Move.from_uci(move_uci)
+                            if move in self.board.legal_moves:
+                                self.board.push(move)
 
-            elif command == "go":
-                self.depth_limit = None
-                self.time_limit_ms = None
-                if "depth" in parts:
-                    self.depth_limit = int(parts[parts.index("depth") + 1])
-                if "time" in parts:
-                    self.time_limit_ms = int(parts[parts.index("movetime") + 1])
+                elif command == "go":
+                    self.depth_limit = None
+                    self.time_limit_ms = None
+                    if "depth" in parts:
+                        self.depth_limit = int(parts[parts.index("depth") + 1])
+                    if "time" in parts:
+                        self.time_limit_ms = int(parts[parts.index("movetime") + 1])
                 
-                best_move_command = self.search_best_move()
-                print(best_move_command)
+                    best_move_command = self.search_best_move()
+                    print(best_move_command)
 
-            elif command == "quit":
-                break
+                elif command == "quit":
+                    break
+            
+            except Exception as e:
+                with open("engine_error.log", "a") as f:
+                    f.write(f"Error at {time.ctime()}: {e}\n")
+                    f.write(traceback.format_exc())
+                print(f"info string Encountered error: {e}")
+
+     
 
 if __name__ == "__main__":
     engine = BasicUCIEngine()
