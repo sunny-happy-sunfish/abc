@@ -1,5 +1,7 @@
 #!usr/bin/env python3
 
+print("---ENGINE STARTING NOW---", file=sys.stderr, flush=True)
+
 import chess
 import sys
 import time
