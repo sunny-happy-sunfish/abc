@@ -22,11 +22,20 @@ class BasicUCIEngine:
         score = sum(piece_values[piece.symbol()] for square in chess.SQUARES if (piece := board.piece_at(square)))
         return score
 
-    def search_best_move(self):
-        start_time = time.time()
-        legal_moves = list(self.board.legal_moves)
-        if not legal_moves:
-            return "bestmove (none)"
+    def negaMax(board, depth, alpha, beta):
+        if depth == 0 or board.is_game_over():
+        return self.evaluate_board(board) * (1 if board.turn == chess.WHITE else -1)
+
+        max_score = float("-inf")
+        for move in board.legal_moves:
+            board.push(move)
+            score = -self.negaMax(board, depth - 1, -beta, -alpha)
+            board.pop()
+            max_score = max(max_score, score)
+            alpha = max(alpha, score)
+            if alpha >= beta:
+                break  # Alpha-beta cutoff
+        return max_score
 
         best_score = float('-inf') if self.board.turn == chess.WHITE else float('inf')
         best_move = legal_moves[0] 
