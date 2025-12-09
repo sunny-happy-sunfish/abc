@@ -1,0 +1,34 @@
+name: Convert .py to executable file
+
+on:
+  workflow_dispatch:
+  push:
+    paths: "user_interface.py"
+
+jobs:
+  convert-py-to-exec:
+    name: Convert
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install pyinstaller
+        run: |
+          pip install pyinstaller
+
+      - name: Convert engine to executable
+        run: |
+          cd engines
+          pyinstaller --onefile strawberrychess.py
+          cd ..
+          mv -f dist/strawberrychess engines/strawberrychess
+          rm -r dist
+      
+      - name: Commit and push engine
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git commit -m "Create engine executable"
+          git push --force
