@@ -1,0 +1,43 @@
+name: Test engine2
+
+on:
+  workflow_dispatch:
+  push:
+    paths: "user_interface.py"
+
+jobs:
+  test-engine2:
+    name: Test engine2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      
+      - name: Install requirements
+        run: pip install -r requirements.txt
+
+      - name: Install python-chess in engines folder
+        run: |
+          cd engines
+          pip install python-chess
+          pip install chess
+          cd ..
+        
+      - name: chmod
+        run: chmod +x ./engines/strawberrychess.py ./engines/runbot.sh
+        
+      - name: Run
+        run: |
+          ./engines/strawberrychess
+          isready
+
+#      - name: Self-restart
+#        if: always()
+#        run: gh workflow run run.yml
+#        env:
+#          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
