@@ -25,6 +25,7 @@ jobs:
         run: |
           cd engines
           pip install python-chess
+          pip install chess
           cd ..
         
       - name: Token
